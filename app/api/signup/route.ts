@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
 		// Auth errros
 		if (auth_error) {
-			return NextResponse.json({ status: 'error', message: parseError(auth_error.message) }, { status: 400 });
+			return NextResponse.json({ status: 'error', message: parseError(auth_error.message, auth_error.code) }, { status: 400 });
 		}
 		if (!auth_data.user) {
 			return NextResponse.json({ status: 'error', message: 'There was an issue signing up. Please try again' }, { status: 500 });

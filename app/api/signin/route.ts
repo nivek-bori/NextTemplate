@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
 		// Auth errors
 		if (auth_error) {
-			return NextResponse.json({ status: 'error', message: parseError(auth_error.message) }, { status: 400 });
+			return NextResponse.json({ status: 'error', message: parseError(auth_error.message, auth_error.code) }, { status: 400 });
 		}
 		if (!auth_data.user) {
 			return NextResponse.json({ status: 'error', message: 'Please confirm your email' }, { status: 202 });

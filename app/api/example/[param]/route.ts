@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
-import { isAuthorized, parseError } from '@/lib/utils';
+import { isAuthorized } from '@/lib/utils';
 
 /* 
 	reference types.ts for the sign in args and ret structures

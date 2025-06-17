@@ -14,7 +14,6 @@ export function parseError(message: string, code?: string): string {
 	// prisma
 	if (code === 'P2002') message = 'Email address already exists';
 
-	console.log(message, retMessage); // TODO: REMOVE
 	return message;
 }
 
