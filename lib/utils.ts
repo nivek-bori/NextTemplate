@@ -1,11 +1,36 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { Role } from '@/app/types';
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+// Parsing backend errors for front end presentation
+export function parseError(message: string, code?: string): string {
+	if (typeof message !== 'string') {
+		throw new Error('Parse error must receive a string');
+	}
+
+	let retMessage = message;
+
+	// supabase
+	if (message === 'email_not_confirmed') message = 'Please confirm your email';
+
+	// prisma
+	if (code === 'P2002') message = 'Email address already exists';
+
+	console.log(message, retMessage); // TODO: REMOVE
+	return message;
 }
 
-// This check can be removed, it is just for tutorial purposes
-export const hasEnvVars =
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const roleHierarchy: Record<Role, number> = {
+	admin: 2,
+	user: 1,
+	guest: 0,
+};
+
+export function isAuthorized(userRole: string | null | undefined, requiredRole: string) {
+	if (!userRole) {
+		userRole = 'guest';
+	}
+
+	const userRoleLevel = roleHierarchy[userRole as Role];
+	const requiredRoleLevel = roleHierarchy[requiredRole as Role];
+
+	return userRoleLevel >= requiredRoleLevel;
+}

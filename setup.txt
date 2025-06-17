@@ -1,0 +1,41 @@
+/* 
+	ENV:
+	Fill these out
+*/
+
+HOSTING_LOCATION='http://localhost:3000'
+
+// supabase authentication
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+// prisma db connection
+DATABASE_URL=
+DIRECT_URL=
+
+
+
+/*
+	PRISMA:
+	Make sure that @/prisma/schema.prisma has a direct url for migration
+	Turn off proxy and switch wifi if not working
+	Wait at least 2 minutes for migrations
+*/
+
+npx prisma init
+
+/* fill out the @/prisma/scheme.prisma */
+
+npx prisma migrate dev -n {migrate_name}
+
+npx prisma db pull
+
+npx prisma generate
+
+
+
+/* 
+	MIDDLEWARE:
+	set the protected routes in lib/supabase/middleware
+*/
