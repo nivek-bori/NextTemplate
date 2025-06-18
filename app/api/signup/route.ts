@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import prisma from '@/lib/database/prisma';
 import { parseError } from '@/lib/utils';
+import { SignUpRet } from '@/app/types';
 
 /* 
 	reference types.ts for the sign in args and ret structures
@@ -16,7 +17,8 @@ export async function POST(request: Request) {
 	const name = body.name;
 
 	if (!email || !password || !name) {
-		return NextResponse.json({ status: 'error', message: 'Not all fields provided: email, password, name' }, { status: 400 });
+		const retBody: SignUpRet = { status: 'error', message: 'Not all fields provided: email, password, name' };
+		return NextResponse.json(retBody, { status: 400 });
 	}
 
 	const supabase = await createClient();
@@ -40,10 +42,12 @@ export async function POST(request: Request) {
 
 		// Auth errros
 		if (auth_error) {
-			return NextResponse.json({ status: 'error', message: parseError(auth_error.message, auth_error.code) }, { status: 400 });
+			const retBody: SignUpRet = { status: 'error', message: parseError(auth_error.message, auth_error.code) };
+			return NextResponse.json(retBody, { status: 400 });
 		}
 		if (!auth_data.user) {
-			return NextResponse.json({ status: 'error', message: 'There was an issue signing up. Please try again' }, { status: 500 });
+			const retBody: SignUpRet = { status: 'error', message: 'There was an issue signing up. Please try again' };
+			return NextResponse.json(retBody, { status: 500 });
 		}
 
 		auth_data_ = auth_data;
@@ -59,10 +63,8 @@ export async function POST(request: Request) {
 
 		user_created = true;
 
-		return NextResponse.json(
-			{ status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/signup-success' },
-			{ status: 200 },
-		);
+		const retBody: SignUpRet = { status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/signup-success' };
+		return NextResponse.json(retBody, { status: 200 });
 	} catch (error: any) {
 		console.log('Route: /api/signup error error', error);
 
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
 			await supabase.auth.admin.deleteUser(auth_data_.user.id);
 		}
 
-		return NextResponse.json({ status: 'errror', message: 'Server error. Please refresh or try again later' }, { status: 500 });
+		const retBody: SignUpRet = { status: 'errror', message: 'Server error. Please refresh or try again later' }
+		return NextResponse.json(retBody, { status: 500 });
 	}
 }
