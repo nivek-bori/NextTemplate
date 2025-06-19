@@ -8,40 +8,47 @@ import axios from 'axios';
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { SignUpArgs } from '../types';
+import { SignInArgs } from '@/app/types';
 import { parseError } from '@/lib/utils';
 
-export default function signup() {
+interface SignInParams {
+	onSignIn: () => void,
+	message?: string,
+}
+
+export default function SignIn(params: SignInParams) {
 	const supabase = createClient();
 	const router = useRouter();
 
 	const [status, setStatus] = useState<{ status: string; message: string }>({ status: 'null', message: '' });
 	// success, loading, error, null
 
-	useEffect(() => {
-		signUp('kevinboriboonsomsin@protonmail.com', '123456', 'nivek');
-	}, []);
+	// TODO: REMOVE DEV
+	useEffect(
+		function () {
+			signIn('kevinboriboonsomsin@gmail.com', '123456');
+		},
+		[supabase],
+	);
 
 	// The frontend should call this function
 	// Prequisite: email, password, and name are all valid - frontend should verify before this function
-	async function signUp(email: string, password: string, name: string) {
+	async function signIn(email: string, password: string) {
 		setStatus({ status: 'loading', message: 'Loading...' });
 
-		const reqBody: SignUpArgs = {
+		const reqBody: SignInArgs = {
 			email: email,
 			password: password,
-			name: name,
 		};
 
 		const controller = new AbortController();
-		setTimeout(() => controller.abort(), 1000 * 60);
+		setTimeout(() => controller.abort(), 1000 * 60); // Timeout logic
 
 		axios
-			.post('http://localhost:3000/api/signup', reqBody, { signal: controller.signal })
+			.post('http://localhost:3000/api/signin', reqBody, { signal: controller.signal })
 			.then(res => {
 				setStatus({ status: res.data.status, message: res.data.message });
-
-				if (res.data.success && res.data.redirectUrl) router.push(res.data.redirectUrl);
+				params.onSignIn();
 			})
 			.catch(err => {
 				// this is an axios error - refer to docuemntation
@@ -57,6 +64,8 @@ export default function signup() {
 
 	return (
 		<div className="flex h-full w-full items-center justify-center">
+			{params.message && (<div className='border-2 border-blue-300 border-b-blue-500'>{params.message}</div>)}
+			
 			{status.status === 'success' && <p className="text-[3rem] font-[600] text-green-500"> {status.message} </p>}
 
 			{status.status === 'error' && <p className="text-[3rem] font-[600] text-red-500"> {status.message} </p>}

@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
 		user_created = true;
 
-		const retBody: SignUpRet = { status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/signup-success' };
+		const retBody: SignUpRet = { status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/enable-mfa' };
 		return NextResponse.json(retBody, { status: 200 });
 	} catch (error: any) {
 		console.log('Route: /api/signup error error', error);
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 			await supabase.auth.admin.deleteUser(auth_data_.user.id);
 		}
 
-		const retBody: SignUpRet = { status: 'errror', message: 'Server error. Please refresh or try again later' }
+		const retBody: SignUpRet = { status: 'error', message: 'Server error. Please refresh or try again later' }
 		return NextResponse.json(retBody, { status: 500 });
 	}
 }

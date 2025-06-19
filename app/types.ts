@@ -4,7 +4,7 @@ export type SignInArgs = {
 };
 
 export type SignInRet = {
-	status: string;
+	status: 'success' | 'error';
 	message: string;
 	redirectUrl?: string;
 };
@@ -16,7 +16,7 @@ export type SignUpArgs = {
 };
 
 export type SignUpRet = {
-	status: string;
+	status: 'success' | 'error';
 	message: string;
 	redirectUrl?: string;
 };
