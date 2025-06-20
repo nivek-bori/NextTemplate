@@ -9,7 +9,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { SignInArgs } from '@/app/types';
-import { parseError } from '@/lib/utils';
+import { parseError } from '@/lib/utils/server_util';
 
 interface SignInParams {
 	onSignIn: () => void,
@@ -26,7 +26,7 @@ export default function SignIn(params: SignInParams) {
 	// TODO: REMOVE DEV
 	useEffect(
 		function () {
-			signIn('kevinboriboonsomsin@gmail.com', '123456');
+			signIn('kevinboriboonsomsin@gmail.com', 'Fourty4thirty3!');
 		},
 		[supabase],
 	);
@@ -54,16 +54,20 @@ export default function SignIn(params: SignInParams) {
 				// this is an axios error - refer to docuemntation
 				if (err.response) {
 					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.response.data.message) });
+					(async () => {setStatus({ status: 'error', message: await parseError(err.response.data.message) });})();
 				} else {
 					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.message) });
+					(async () => {setStatus({ status: 'error', message: await parseError(err.message) });})();
 				}
 			});
 	}
 
 	return (
-		<div className="flex h-full w-full items-center justify-center">
+		<div className="flex flex-col h-full w-full items-center justify-center">
+			<h1>
+				Sign In
+			</h1>
+
 			{params.message && (<div className='border-2 border-blue-300 border-b-blue-500'>{params.message}</div>)}
 			
 			{status.status === 'success' && <p className="text-[3rem] font-[600] text-green-500"> {status.message} </p>}

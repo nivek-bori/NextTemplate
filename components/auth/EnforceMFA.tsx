@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import MFA from '@/components/auth/MFA';
-import { parseError } from '@/lib/utils';
-import SignIn from '@/components/auth/Signin';
-import Loading from '@/components/Loading';
-import ErrorComponent from '@/components/ErrorComponent';
+import MFA from '@/components/auth/VerifyMFA';
+import { parseError } from '@/lib/utils/server_util';
+import ErrorComponent from '@/components/Message';
+import SignIn from '@/components/auth/SignIn';
+import Message from '@/components/Message';
 
-export default function ExampleLayout({ children }: { children: React.ReactNode }) {
+export default function EnforceMFA({ children }: Readonly<{ children: React.ReactNode }>) {
 	const supabase = createClient();
 
 	const [status, setStatus] = useState<{ status: string; message: string }>({ status: 'loading', message: '' });
@@ -20,7 +20,7 @@ export default function ExampleLayout({ children }: { children: React.ReactNode 
 
 			// Auth error
 			if (auth_error) {
-				setStatus({ status: 'error', message: parseError(auth_error.message, auth_error.code) });
+				setStatus({ status: 'error', message: await parseError(auth_error.message, auth_error.code) });
 				return;
 			}
 			if (!auth_data || !auth_data.nextLevel || !auth_data.currentLevel) {
@@ -35,7 +35,7 @@ export default function ExampleLayout({ children }: { children: React.ReactNode 
 
 			// factor errors
 			if (factors_error) {
-				setStatus({ status: 'error', message: parseError(factors_error.message, factors_error.code) });
+				setStatus({ status: 'error', message: await parseError(factors_error.message, factors_error.code) });
 				return;
 			}
 			if (!factors_data) {
@@ -60,17 +60,17 @@ export default function ExampleLayout({ children }: { children: React.ReactNode 
 		} catch (error: any) {
 			console.log('Route example/api/layout error', error);
 
-			if (error && error.message) setStatus({ status: 'error', message: parseError(error.message) });
+			if (error && error.message) setStatus({ status: 'error', message: await parseError(error.message) });
 			setStatus({ status: 'error', message: 'There was an issue when loading the page. Please try again later or refresh' });
 		}
 	}, [supabase]);
 
 	useEffect(() => {
 		checkMFA();
-	}, []);
+	}, [checkMFA]);
 
 	if (status.status === 'error') {
-		return <ErrorComponent message={status.message} />;
+		return <Message type={'error'} message={status.message} />;
 	}
 	if (status.status === 'signin') {
 		return <SignIn onSignIn={checkMFA} />;
@@ -86,5 +86,5 @@ export default function ExampleLayout({ children }: { children: React.ReactNode 
 	if (status.status !== 'loading') {
 		throw new Error('MFA layout error unfamiliar status');
 	}
-	return <Loading />; // render loading component
+	return <Message type={'message'} message={'Loading...'}></Message>
 }

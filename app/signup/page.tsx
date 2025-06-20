@@ -9,7 +9,8 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { SignUpArgs } from '../types';
-import { parseError } from '@/lib/utils';
+import { parseError } from '@/lib/utils/server_util';
+import EnrollMFASignupSuccess from '@/components/auth/EnrollMFASignupSuccess';
 
 export default function signup() {
 	const supabase = createClient();
@@ -19,7 +20,8 @@ export default function signup() {
 	// success, loading, error, null
 
 	useEffect(() => {
-		signUp('kevinboriboonsomsin@protonmail.com', '123456', 'nivek');
+		signUp('kevinboriboonsomsin@protonmail.com', 'Ab123456!', 'nivek');
+		// signUp('deanhiran@gmail.com', 'Ab123456!', 'jorxy');
 	}, []);
 
 	// The frontend should call this function
@@ -47,12 +49,17 @@ export default function signup() {
 				// this is an axios error - refer to docuemntation
 				if (err.response) {
 					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.response.data.message) });
+					(async () => {setStatus({ status: 'error', message: await parseError(err.response.data.message) });})();
 				} else {
 					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.message) });
+
+					(async () => {setStatus({ status: 'error', message: await parseError(err.message) });})();
 				}
 			});
+	}
+
+	if (status.status === 'success') {
+		return <EnrollMFASignupSuccess/>
 	}
 
 	return (

@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { Role } from '@/app/types';
-import { isAuthorized } from '../utils';
+import { isAuthorized } from '../utils/util';
 
 export async function updateSession(request: NextRequest) {
 	let supabaseResponse = NextResponse.next({
@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
 		otherwise allow the request
 	*/
 
-	// Easy of development - if enable -> todo remove
+	// Easy of development - if enable -> TODO: REMOVE
 	if (process.env.NODE_ENV === 'development') {
 		console.log('middleware skipped due to development environment');
 		return supabaseResponse;

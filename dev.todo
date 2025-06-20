@@ -1,3 +1,9 @@
 MFA:
-	▫ /app/enable-mfa finish
+	✔ /app/enable-mfa finish @started(25-06-19 18:17) @done(25-06-19 18:17) @lasted(49s)
 	▫ /components/auth/MFA finish
+	▫ add in prisma error codes to what is passed to parseError()
+
+	user signs up -> enable mfa
+	user requests protected page -> check sign in -> check mfa -> allow
+
+	▫ parseError all redirect to /signin must also include messages

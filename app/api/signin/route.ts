@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
-import { parseError } from '@/lib/utils';
+import { parseError } from '@/lib/utils/server_util';
 import { SignInRet } from '@/app/types';
 
 /* 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
 		// Auth errors
 		if (auth_error) {
-			const retBody: SignInRet = { status: 'error', message: parseError(auth_error.message, auth_error.code) }
+			const retBody: SignInRet = { status: 'error', message: await parseError(auth_error.message, auth_error.code) }
 			return NextResponse.json(retBody, { status: 400 });
 		}
 		if (!auth_data.user) {
