@@ -2,11 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import MFA from '@/components/auth/VerifyMFA';
+import VerifyMFA from '@/components/auth/VerifyMFA';
 import { parseError } from '@/lib/utils/server_util';
-import ErrorComponent from '@/components/Message';
 import SignIn from '@/components/auth/SignIn';
 import Message from '@/components/Message';
+
+/* 
+	if a facotr is in totp -> it is verified
+	if it is in all, then it is either verified or unverified
+*/
 
 export default function EnforceMFA({ children }: Readonly<{ children: React.ReactNode }>) {
 	const supabase = createClient();
@@ -45,10 +49,7 @@ export default function EnforceMFA({ children }: Readonly<{ children: React.Reac
 
 			// if totp mfa factors verified -> enforce mfa
 			if (factors_data.totp.some(factor => factor.status === 'verified')) {
-				console.log(
-					'has facotrs: ',
-					factors_data.totp.some(factor => factor.status === 'verified'),
-				);
+				console.log(auth_data);
 				// enforce mfa - 'aal1' is caught above
 				if (auth_data.nextLevel === 'aal2' && auth_data.nextLevel !== auth_data.currentLevel) {
 					setStatus({ status: 'mfa', message: 'Please complete your multi-factor authentication' });
@@ -76,7 +77,7 @@ export default function EnforceMFA({ children }: Readonly<{ children: React.Reac
 		return <SignIn onSignIn={checkMFA} />;
 	}
 	if (status.status === 'mfa') {
-		return <MFA onMFA={checkMFA} />;
+		return <VerifyMFA onMFA={checkMFA} />;
 	}
 	if (status.status === 'authenticated') {
 		return <>{children}</>;

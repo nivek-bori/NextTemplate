@@ -3,8 +3,8 @@ import prisma from '@/lib/database/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { SignUpArgs } from '@/app/types';
-import { error } from 'console';
 import { parseError } from '@/lib/utils/server_util';
+import { cookies } from 'next/headers';
 
 // Only allow in development
 const isDev = process.env.NODE_ENV === 'development';
@@ -129,6 +129,10 @@ export async function DELETE(request: Request) {
 				}
 			}
 		}
+
+		const cookieStore = await cookies();
+		cookieStore.delete('sb-access-token');
+		cookieStore.delete('sb-refresh-token');
 
 		console.log(errorMessages);
 

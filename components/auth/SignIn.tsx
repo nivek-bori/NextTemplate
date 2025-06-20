@@ -53,11 +53,15 @@ export default function SignIn(params: SignInParams) {
 			.catch(err => {
 				// this is an axios error - refer to docuemntation
 				if (err.response) {
-					console.log('Page /signup signup error: ', err);
-					(async () => {setStatus({ status: 'error', message: await parseError(err.response.data.message) });})();
+					console.log('Page /signup signup error: ', err); // TODO: DEV REMOVE
+					(async () => {
+						setStatus({ status: 'error', message: await parseError(err.response.data.message) });
+					})();
 				} else {
-					console.log('Page /signup signup error: ', err);
-					(async () => {setStatus({ status: 'error', message: await parseError(err.message) });})();
+					console.log('Page /signup signup error: ', err); // TODO: DEV REMOVE
+					(async () => {
+						setStatus({ status: 'error', message: await parseError(err.message) });
+					})();
 				}
 			});
 	}

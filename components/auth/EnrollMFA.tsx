@@ -48,46 +48,22 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 				return;
 			}
 
-			if (factor_data.totp.length === 0) {
-				// if no mfa -> enroll mfa
-				enrollMFA();
-			} else {
-				// IF verified mfa -> mfa done
-				if (factor_data.totp.some(factor => factor.status === 'verified')) {
-					setStatus({ status: 'success', message: 'Multi-factor authentication is already enabled' });
-					router.push('/');
-					return;
-				}
+			console.log(factor_data.all);
 
-				// If there's an unverified factor, use that instead of creating a new one
-				const pendingFactor = factor_data.totp.find(factor => factor.status === 'unverified');
-				if (pendingFactor) {
-					// Re-challenge to get a fresh QR code
-					const { data: challenge_data, error: challenge_error } = await supabase.auth.mfa.challenge({ factorId: pendingFactor.id });
-					if (challenge_error) {
-						console.log('challenge error', challenge_error); // TODO: REMOVE
-						setStatus({ status: 'error', message: await parseError(challenge_error.message) });
-						return;
-					}
-					if (!challenge_data) {
-						setStatus({ status: 'error', message: 'There was an issue. Please try again later or refresh' });
-						return;
-					}
-
-					setFactorId(pendingFactor.id);
-					// setQR(challenge_data.qrCode);
-					setStatus({ status: 'null', message: '' });
-				} else {
-					enrollMFA();
-				}
+			// if totp is already enabled
+			if (factor_data.totp.some(factor => factor.status === 'verified' && factor.factor_type === 'totp')) {
+				setStatus({ status: 'success', message: 'Multi-factor authentication is already enabled' });
+				return;
 			}
+
+			enrollMFA();
 		}
 		exec();
 	}, []);
 
 	async function enrollMFA() {
 		const deviceName = (await getModernDeviceName()) || getDeviceName();
-		const { data: enroll_data, error: enroll_error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: deviceName });
+		const { data: enroll_data, error: enroll_error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
 		if (enroll_error) {
 			console.log('enroll error', enroll_error); // TODO: REMOVE
 			setStatus({ status: 'error', message: await parseError(enroll_error.message) });
@@ -108,6 +84,15 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 
 	async function verifyEnrollment() {
 		setStatus({ status: 'loading', message: '' });
+
+		// TODO: REMOVE
+		async function checkUnverifiedStatusFirst() {
+			// list mfa factors that user has
+			const { data: factors_data, error: factors_error } = await supabase.auth.mfa.listFactors();
+
+			console.log('Enforce mfa factors First: ', factors_data); // TODO: REMOVE
+		}
+		checkUnverifiedStatusFirst();
 
 		// enrollment challenge
 		const { data: challenge_data, error: challenge_error } = await supabase.auth.mfa.challenge({ factorId });
@@ -131,48 +116,59 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 			return;
 		}
 
-		onEnrolled();
-	}
+		// TODO: REMOVE
+		async function checkUnverifiedStatusSecond() {
+			// list mfa factors that user has
+			const { data: factors_data, error: factors_error } = await supabase.auth.mfa.listFactors();
 
-	function onEnrolled() {
-		// TODO:
+			console.log('Enforce mfa factors Second: ', factors_data); // TODO: REMOVE
+		}
+		checkUnverifiedStatusSecond();
+
+		setStatus({ status: 'success', message: 'Successfully enabled multi-factor authentication' });
 	}
 
 	if (status.status === 'page_loading') {
 		return <Message type={'message'} message={'Loading...'}></Message>;
 	}
 
+	if (status.status === 'success') {
+		return <Message type={'message'} message={status.message}></Message>;
+	}
+
 	return (
 		<div className="flex h-full w-full items-center justify-center">
 			<div className="mx-auto flex max-w-3xl flex-col rounded-lg bg-white p-6 shadow-md">
-				<h2 className="mb-6 text-2xl font-semibold text-gray-800">Enable Two-Factor Authentication</h2>
+				<div className="flex flex-col items-center gap-[2rem] px-[2rem]">
+					{status.status === 'loading' && (
+						<div className="mb-4 w-full rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 text-blue-700">
+							<p>Processing your request...</p>
+						</div>
+					)}
 
-				{status.status === 'error' && (
-					<div className="mb-4 w-full rounded-md border-l-4 border-red-500 bg-red-50 p-3 text-red-700">
-						<p>{status.message}</p>
-					</div>
-				)}
+					{status.status === 'error' && (
+						<div className="mx-10 mb-4 w-full rounded-md border-l-4 border-red-500 bg-red-50 p-3 text-red-700">
+							<p>{status.message}</p>
+						</div>
+					)}
 
-				{status.status === 'loading' && (
-					<div className="mb-4 w-full rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 text-blue-700">
-						<p>Processing your request...</p>
-					</div>
-				)}
+					<h2 className="mb-6 text-center text-2xl font-semibold text-gray-800">Enable Two-Factor Authentication</h2>
 
-				<div className="flex flex-col md:flex-row md:space-x-8">
+					<p className="mb-4 text-center text-gray-600">
+						Scan this QR code with your authenticator app (like Google Authenticator, Authy, or 1Password)
+					</p>
+				</div>
+
+				<div className="flex flex-col md:flex-row md:space-x-4">
 					{/* QR Code Section */}
-					<div className="mb-6 flex flex-col items-center justify-start md:mb-0">
-						<p className="mb-4 text-center text-gray-600">
-							Scan this QR code with your authenticator app (like Google Authenticator, Authy, or 1Password)
-						</p>
-
+					<div className="m-10 flex flex-col items-center justify-start md:mb-0">
 						{qr ? (
-							<div className="rounded-lg border border-gray-300 bg-gray-50 p-4">
-								<img src={qr} alt="QR Code for MFA setup" className="h-48 w-48" />
+							<div className="flex aspect-square items-center justify-center rounded-lg border border-gray-300 bg-gray-50 p-4">
+								<img src={qr} alt="QR Code for MFA setup" className="aspect-square h-40 w-40 object-contain" />
 							</div>
 						) : (
 							status.status !== 'error' && (
-								<div className="flex h-48 w-48 items-center justify-center rounded-lg bg-gray-100">
+								<div className="flex aspect-square h-48 w-48 items-center justify-center rounded-lg bg-gray-100">
 									<svg
 										className="h-8 w-8 animate-spin text-gray-500"
 										xmlns="http://www.w3.org/2000/svg"

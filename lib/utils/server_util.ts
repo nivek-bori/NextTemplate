@@ -16,6 +16,7 @@ export async function parseError(message: string, code?: string): Promise<string
 		retMessage = 'Please confirm your email';
 	}
 	if (message === 'Auth session missing!') {
+		console.log('PARSE ERROR: auth session missing');
 		retMessage = 'Please sign in first';
 		redirect('/signin');
 	}
@@ -23,6 +24,7 @@ export async function parseError(message: string, code?: string): Promise<string
 		retMessage = 'Password must contain: lower and upper case letters, at least 1 number, and at least 1 special character';
 	}
 	if (code === 'user_not_found') {
+		console.log('PARSE ERROR: user not found')
 		const cookie = await cookies();
 		cookie.delete('sb-access-token');
 		cookie.delete('sb-refresh-token');

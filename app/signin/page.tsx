@@ -1,19 +1,23 @@
 'use client'
 
+import EnforceMFA from '@/components/auth/EnforceMFA';
+import Message from '@/components/Message';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export default function signin() {
-	// This page will be surrounded in the full auth flow (sign in + mfa)
-	// When this page is rendered, the user will already be signed in
-
 	const router = useRouter();
 
-	useEffect(() => {
-		router.push('/');
-	})
+	const redirect = useCallback(() => {router.push('/')}, [router]);
 
 	return (
-		<p>successful sign in</p>
-	)
+		<EnforceMFA>
+			<div className="flex h-full w-full flex-col items-center justify-center">
+				<Message type={'message'} message={'successful sign in'} />
+				<Link href={'/'}>Home page</Link>
+				<Link href={'/enable-mfa'}>Enable MFA</Link>
+			</div>
+		</EnforceMFA>
+	);
 }
