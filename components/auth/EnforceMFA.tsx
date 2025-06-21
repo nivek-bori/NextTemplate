@@ -49,7 +49,6 @@ export default function EnforceMFA({ children }: Readonly<{ children: React.Reac
 
 			// if totp mfa factors verified -> enforce mfa
 			if (factors_data.totp.some(factor => factor.status === 'verified')) {
-				console.log(auth_data);
 				// enforce mfa - 'aal1' is caught above
 				if (auth_data.nextLevel === 'aal2' && auth_data.nextLevel !== auth_data.currentLevel) {
 					setStatus({ status: 'mfa', message: 'Please complete your multi-factor authentication' });
@@ -59,7 +58,7 @@ export default function EnforceMFA({ children }: Readonly<{ children: React.Reac
 
 			setStatus({ status: 'authenticated', message: 'Welcome!' });
 		} catch (error: any) {
-			console.log('Route example/api/layout error', error);
+			console.log('Route example/api/layout error', error); // TODO: DEV REMOVE
 
 			if (error && error.message) setStatus({ status: 'error', message: await parseError(error.message) });
 			setStatus({ status: 'error', message: 'There was an issue when loading the page. Please try again later or refresh' });

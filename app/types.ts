@@ -21,4 +21,11 @@ export type SignUpRet = {
 	redirectUrl?: string;
 };
 
+export type DeleteMFAArgs = {};
+
+export type DeleteMFARet = {
+	status: string;
+	message: string;
+};
+
 export type Role = 'admin' | 'user' | 'guest';

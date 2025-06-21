@@ -4,6 +4,7 @@ import Message from '@/components/Message';
 import { createClient } from '@/lib/supabase/client';
 import { getDeviceName, getModernDeviceName } from '@/lib/utils/device';
 import { parseError } from '@/lib/utils/server_util';
+import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -48,7 +49,15 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 				return;
 			}
 
-			console.log(factor_data.all);
+			const controller = new AbortController();
+			setTimeout(() => controller.abort(), 1000 * 60);
+
+			// discard all unverified mfa
+			await axios
+				.post(`http://localhost:3000/api/mfa/`, {}, { signal: controller.signal })
+				.catch(err => {
+					console.log('Route /components/auth/EnrollMFA error', err); // TODO: DEV REMOVE
+				});
 
 			// if totp is already enabled
 			if (factor_data.totp.some(factor => factor.status === 'verified' && factor.factor_type === 'totp')) {
@@ -62,6 +71,15 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 	}, []);
 
 	async function enrollMFA() {
+		// TODO: DEV REMOVE
+		async function temp_factorlog() {
+			try {
+				const { data: factor_data, error: factor_error } = await supabase.auth.mfa.listFactors();
+				console.log(factor_data);
+			} catch (error) {}
+		}
+		temp_factorlog();
+
 		const deviceName = (await getModernDeviceName()) || getDeviceName();
 		const { data: enroll_data, error: enroll_error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
 		if (enroll_error) {
