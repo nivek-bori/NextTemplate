@@ -1,72 +1,23 @@
-/* location: /app/signup/page.tsx */
-'use client';
+'use client'
 
-import React from 'react';
-import { useState, useEffect } from 'react';
-
-import axios from 'axios';
-
+import EnforceMFA from '@/components/auth/EnforceMFA';
+import Message from '@/components/Message';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { SignInArgs } from '../types';
-import { parseError } from '@/lib/utils';
+import { useCallback, useEffect } from 'react';
 
 export default function signin() {
-	const supabase = createClient();
 	const router = useRouter();
 
-	const [status, setStatus] = useState<{
-		status: string; // success, loading, error, null
-		message: string;
-	}>({ status: 'null', message: '' });
-
-	// TODO: REMOVE DE
-	useEffect(
-		function () {
-			signIn('kevinboriboonsomsin@gmail.com', '123456');
-		},
-		[supabase],
-	);
-
-	// The frontend should call this function
-	// Prequisite: email, password, and name are all valid - frontend should verify before this function
-	async function signIn(email: string, password: string) {
-		setStatus({ status: 'loading', message: 'Loading...' });
-
-		const reqBody: SignInArgs = {
-			email: email,
-			password: password,
-		};
-
-		const controller = new AbortController();
-		setTimeout(() => controller.abort(), 1000 * 60); // Timeout logic
-
-		axios
-			.post('http://localhost:3000/api/signin', reqBody, { signal: controller.signal })
-			.then(res => {
-				setStatus({ status: res.data.status, message: res.data.message });
-
-				if (res.data.status === 'success' && res.data.redirectUrl) router.push(res.data.redirectUrl);
-			})
-			.catch(err => {
-				// this is an axios error - refer to docuemntation
-				if (err.response) {
-					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.response.data.message)});
-				} else {
-					console.log('Page /signup signup error: ', err);
-					setStatus({ status: 'error', message: parseError(err.message) });
-				}
-			});
-	}
+	const redirect = useCallback(() => {router.push('/')}, [router]);
 
 	return (
-		<div className="flex h-full w-full items-center justify-center">
-			{status.status === 'success' && <p className="text-[3rem] font-[600] text-green-500"> {status.message} </p>}
-
-			{status.status === 'error' && <p className="text-[3rem] font-[600] text-red-500"> {status.message} </p>}
-
-			{(status.status === 'loading' || status.status === 'null') && <p className="text-[3rem] font-[600] text-gray-500"> {'Loading'} </p>}
-		</div>
+		<EnforceMFA>
+			<div className="flex h-full w-full flex-col items-center justify-center">
+				<Message type={'message'} message={'successful sign in'} />
+				<Link href={'/'}>Home page</Link>
+				<Link href={'/enable-mfa'}>Enable MFA</Link>
+			</div>
+		</EnforceMFA>
 	);
 }

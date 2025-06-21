@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import prisma from '@/lib/database/prisma';
-import { parseError } from '@/lib/utils';
+import { parseError } from '@/lib/utils/server_util';
 import { SignUpRet } from '@/app/types';
 
 /* 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
 		// Auth errros
 		if (auth_error) {
-			const retBody: SignUpRet = { status: 'error', message: parseError(auth_error.message, auth_error.code) };
+			const retBody: SignUpRet = { status: 'error', message: await parseError(auth_error.message, auth_error.code) };
 			return NextResponse.json(retBody, { status: 400 });
 		}
 		if (!auth_data.user) {
@@ -53,17 +53,22 @@ export async function POST(request: Request) {
 		auth_data_ = auth_data;
 
 		// DB sign up
-		const db_data = await prisma.user.create({
-			data: {
-				id: auth_data.user.id,
-				email: email,
-				name: name,
-			},
-		});
+		try {
+			const db_data = await prisma.user.create({
+				data: {
+					id: auth_data.user.id,
+					email: email,
+					name: name,
+				},
+			});
+		} catch (error: any) {
+			const retBody: SignUpRet = { status: 'error', message: await parseError(error.message, error.code)};
+			return NextResponse.json(retBody, { status: 400 });
+		}
 
 		user_created = true;
 
-		const retBody: SignUpRet = { status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/signup-success' };
+		const retBody: SignUpRet = { status: 'success', message: `Welcome ${name}. Please confirm your email`, redirectUrl: '/enable-mfa' };
 		return NextResponse.json(retBody, { status: 200 });
 	} catch (error: any) {
 		console.log('Route: /api/signup error error', error);
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
 			await supabase.auth.admin.deleteUser(auth_data_.user.id);
 		}
 
-		const retBody: SignUpRet = { status: 'errror', message: 'Server error. Please refresh or try again later' }
+		const retBody: SignUpRet = { status: 'error', message: 'Server error. Please refresh or try again later' }
 		return NextResponse.json(retBody, { status: 500 });
 	}
 }

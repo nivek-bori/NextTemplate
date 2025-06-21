@@ -2,28 +2,29 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/database/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { parseError } from '@/lib/utils';
 import { SignUpArgs } from '@/app/types';
-import { error } from 'console';
+import { parseError } from '@/lib/utils/server_util';
+import { cookies } from 'next/headers';
 
 // Only allow in development
 const isDev = process.env.NODE_ENV === 'development';
+const errorSeperator = ' || '
 
 export async function DELETE(request: Request) {
 	try {
 		const supabase = await createClient();
 
 		// TODO: Add in for production, remove for development
-		if (!isDev) {
-			console.error('Attempted to access /api/developer in non-development environment');
-			return NextResponse.json({ status: 'error', message: 'This endpoint is only available in development' }, { status: 403 });
-		}
+		// if (!isDev) {
+		// 	console.error('Attempted to access /api/developer in non-development environment');
+		// 	return NextResponse.json({ status: 'error', message: 'This endpoint is only available in development' }, { status: 403 });
+		// }
 
-		const { data: auth_data, error: auth_error } = await supabase.auth.getUser();
-		// Auth errros
-		if (auth_error) return NextResponse.json({ status: 'error', message: 'Please sign in' }, { status: 401 });
-		if (!auth_data.user) return NextResponse.json({ status: 'error', message: 'Please sign in' }, { status: 401 });
-		if (auth_data.user.role !== 'admin') return NextResponse.json({ status: 'error', message: 'Unauthorized action' }, { status: 403 });
+		// const { data: auth_data, error: auth_error } = await supabase.auth.getUser();
+		// // Auth errros
+		// if (auth_error) return NextResponse.json({ status: 'error', message: 'Please sign in' }, { status: 401 });
+		// if (!auth_data.user) return NextResponse.json({ status: 'error', message: 'Please sign in' }, { status: 401 });
+		// if (auth_data.user.role !== 'admin') return NextResponse.json({ status: 'error', message: 'Unauthorized action' }, { status: 403 });
 		// TODO: Add in for production, remove for development
 
 		const body = await request.json();
@@ -41,7 +42,7 @@ export async function DELETE(request: Request) {
 			// Note, if admin_auth_data.users is null, there is no error because then the request is to delete no users
 			if (admin_auth_error) {
 				console.error('Route /api/dev/users/delete auth delete error', admin_auth_error);
-				errorMessages = errorMessages + parseError(admin_auth_error.message, admin_auth_error.code) + ' | ';
+				errorMessages = errorMessages + await parseError(admin_auth_error.message, admin_auth_error.code) + errorSeperator;
 			}
 
 			if (admin_auth_data?.users && admin_auth_data.users.length > 0) {
@@ -49,7 +50,7 @@ export async function DELETE(request: Request) {
 					const { error: deleteError } = await admin_supabase.auth.admin.deleteUser(user.id);
 					if (deleteError) {
 						console.error(`Route /api/dev/users/delete delete auth delete user id ${user.id} error`, deleteError);
-						errorMessages = errorMessages + parseError(deleteError.message, deleteError.code) + ' | ';
+						errorMessages = errorMessages + await parseError(deleteError.message, deleteError.code) + errorSeperator;
 					}
 				}
 			}
@@ -63,10 +64,10 @@ export async function DELETE(request: Request) {
 				console.error('Route /api/dev/users/delete delete db error', error);
 
 				if (error && error.message) {
-					if (error.code) errorMessages = errorMessages + parseError(error.message, error.code) + ' | ';
-					errorMessages = errorMessages + parseError(error.message) + ' | ';
+					if (error.code) errorMessages = errorMessages + await parseError(error.message, error.code) + errorSeperator;
+					errorMessages = errorMessages + await parseError(error.message) + errorSeperator;
 				} else {
-					errorMessages = errorMessages + 'DB error' + ' | ';
+					errorMessages = errorMessages + 'DB error' + errorSeperator;
 				}
 			}
 		}
@@ -97,12 +98,18 @@ export async function DELETE(request: Request) {
 								name: admin.name,
 								role: 'admin',
 							},
-							emailRedirectTo: `${process.env.HOSTING_LOCATION}/protected`,
+							emailRedirectTo: `${process.env.HOSTING_LOCATION}/developer`,
 						},
 					});
 
-					if (auth_error) throw new Error(parseError(auth_error.message, auth_error.code));
-					if (!auth_data.user) throw new Error(`Error signing up ${admin.name}`);
+					if (auth_error) {
+						errorMessages = errorMessages + admin.name + ' -> ' + await parseError(auth_error.message, auth_error.code) + errorSeperator;
+						continue;
+					}
+					if (!auth_data.user) {
+						errorMessages = errorMessages + admin.name + ` -> Error signing up ${admin.name} | `;
+						continue;
+					}
 
 					const db_data = await prisma.user.create({
 						data: {
@@ -114,14 +121,18 @@ export async function DELETE(request: Request) {
 				} catch (error: any) {
 					console.log('Route /api/dev/user/delete signup admin error', error);
 					if (error && error.message) {
-						if (error.code) errorMessages = errorMessages + parseError(error.message, error.code) + ' | ';
-						errorMessages = errorMessages + parseError(error.message) + ' | ';
+						if (error.code) errorMessages = errorMessages + await parseError(error.message, error.code) + errorSeperator;
+						errorMessages = errorMessages + await parseError(error.message) + errorSeperator;
 					} else {
-						errorMessages = errorMessages + 'Admin sign up error' + ' | ';
+						errorMessages = errorMessages + 'Admin sign up error' + errorSeperator;
 					}
 				}
 			}
 		}
+
+		const cookieStore = await cookies();
+		cookieStore.delete('sb-access-token');
+		cookieStore.delete('sb-refresh-token');
 
 		console.log(errorMessages);
 
@@ -130,8 +141,8 @@ export async function DELETE(request: Request) {
 		return NextResponse.json({ status: status, message: message }, { status: 200 });
 	} catch (error: any) {
 		if (error && error.message) {
-			if (error.code) return NextResponse.json({ status: 'error', message: parseError(error.message, error.code) }, { status: 500 });
-			return NextResponse.json({ status: 'error', message: parseError(error.message) }, { status: 500 });
+			if (error.code) return NextResponse.json({ status: 'error', message: await parseError(error.message, error.code) }, { status: 500 });
+			return NextResponse.json({ status: 'error', message: await parseError(error.message) }, { status: 500 });
 		}
 
 		return NextResponse.json({ status: 'error', message: 'There was a server error' }, { status: 500 });
