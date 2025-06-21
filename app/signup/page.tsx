@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { SignUpArgs } from '../types';
 import { parseError } from '@/lib/utils/server_util';
-import EnrollMFASignupSuccess from '@/components/auth/EnrollMFASignupSuccess';
+import EnrollMFA from '@/components/auth/EnrollMFA';
 
 export default function signup() {
 	const supabase = createClient();
@@ -59,7 +59,7 @@ export default function signup() {
 	}
 
 	if (status.status === 'success') {
-		return <EnrollMFASignupSuccess/>
+		return <EnrollMFA message='Sign up successful'/>
 	}
 
 	return (

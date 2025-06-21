@@ -9,7 +9,7 @@ import { useCallback, useEffect } from 'react';
 export default function signin() {
 	const router = useRouter();
 
-	const redirect = useCallback(() => {router.push('/')}, [router]);
+	const redirect = useCallback(() => {router.back()}, [router]);
 
 	return (
 		<EnforceMFA>
