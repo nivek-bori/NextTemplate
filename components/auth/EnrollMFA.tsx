@@ -103,15 +103,6 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 	async function verifyEnrollment() {
 		setStatus({ status: 'loading', message: '' });
 
-		// TODO: REMOVE
-		async function checkUnverifiedStatusFirst() {
-			// list mfa factors that user has
-			const { data: factors_data, error: factors_error } = await supabase.auth.mfa.listFactors();
-
-			console.log('Enforce mfa factors First: ', factors_data); // TODO: REMOVE
-		}
-		checkUnverifiedStatusFirst();
-
 		// enrollment challenge
 		const { data: challenge_data, error: challenge_error } = await supabase.auth.mfa.challenge({ factorId });
 		if (challenge_error) {
@@ -133,15 +124,6 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 			setStatus({ status: 'error', message: await parseError(verify_error.message, verify_error.code) });
 			return;
 		}
-
-		// TODO: REMOVE
-		async function checkUnverifiedStatusSecond() {
-			// list mfa factors that user has
-			const { data: factors_data, error: factors_error } = await supabase.auth.mfa.listFactors();
-
-			console.log('Enforce mfa factors Second: ', factors_data); // TODO: REMOVE
-		}
-		checkUnverifiedStatusSecond();
 
 		setStatus({ status: 'success', message: 'Successfully enabled multi-factor authentication' });
 	}

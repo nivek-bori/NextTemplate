@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from '@/lib/supabase/client';
 import { parseError } from '@/lib/utils/server_util';
-import { useState } from "react";
+import { useState } from 'react';
 
 interface MFAParams {
 	onMFA: () => void;
@@ -16,13 +16,13 @@ export default function VerifyMFA(params: MFAParams) {
 	// 'success' 'error' 'loading' 'null'
 
 	async function verifyMFA() {
-		const { data: factor_data, error: factor_error } = await supabase.auth.mfa.listFactors()
+		const { data: factor_data, error: factor_error } = await supabase.auth.mfa.listFactors();
 		if (factor_error) {
 			setStatus({ status: 'error', message: await parseError(factor_error.message, factor_error.code) });
 			return;
 		}
 		if (!factor_data) {
-			setStatus({ status: 'error', message: 'Please sign in before multi-factor authentication'});
+			setStatus({ status: 'error', message: 'Please sign in before multi-factor authentication' });
 			return;
 		}
 
@@ -36,7 +36,7 @@ export default function VerifyMFA(params: MFAParams) {
 
 		const factorId = totpFactor.id;
 
-		const { data: challenge_data, error: challenge_error} = await supabase.auth.mfa.challenge({ factorId })
+		const { data: challenge_data, error: challenge_error } = await supabase.auth.mfa.challenge({ factorId });
 		if (challenge_error) {
 			setStatus({ status: 'error', message: await parseError(challenge_error.message, challenge_error.code) });
 			return;
@@ -48,7 +48,7 @@ export default function VerifyMFA(params: MFAParams) {
 
 		const challengeId = challenge_data.id;
 
-		const { data: verify_data, error: verify_error} = await supabase.auth.mfa.verify({
+		const { data: verify_data, error: verify_error } = await supabase.auth.mfa.verify({
 			factorId,
 			challengeId,
 			code: verifyCode,
@@ -62,7 +62,7 @@ export default function VerifyMFA(params: MFAParams) {
 		setStatus({ status: 'success', message: 'Authentication success!' });
 		params.onMFA();
 	}
-	
+
 	return (
 		<div className="flex h-full w-full items-center justify-center">
 			<div className="mx-auto flex max-w-md flex-col rounded-lg bg-white p-6 shadow-md">
