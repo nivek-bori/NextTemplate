@@ -12,7 +12,7 @@ interface EnrollMFAParams {
 	message?: string
 }
 
-export default function EnrollMFA(params: EnrollMFAParams) {
+export default function EnableMFA(params: EnrollMFAParams) {
 	const supabase = createClient();
 	const router = useRouter();
 
@@ -71,15 +71,6 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 	}, []);
 
 	async function enrollMFA() {
-		// TODO: DEV REMOVE
-		async function temp_factorlog() {
-			try {
-				const { data: factor_data, error: factor_error } = await supabase.auth.mfa.listFactors();
-				console.log(factor_data);
-			} catch (error) {}
-		}
-		temp_factorlog();
-
 		const deviceName = (await getModernDeviceName()) || getDeviceName();
 		const { data: enroll_data, error: enroll_error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
 		if (enroll_error) {
@@ -140,6 +131,12 @@ export default function EnrollMFA(params: EnrollMFAParams) {
 		<div className="flex h-full w-full items-center justify-center">
 			<div className="mx-auto flex max-w-3xl flex-col rounded-lg bg-white p-6 shadow-md">
 				<div className="flex flex-col items-center gap-[2rem] px-[2rem]">
+					{params.message && (
+						<div className="mx-10 mb-4 w-full rounded-md border-l-4 border-red-500 bg-red-50 p-3 text-red-700">
+							<p>{params.message}</p>
+						</div>
+					)}
+
 					{status.status === 'loading' && (
 						<div className="mb-4 w-full rounded-md border-l-4 border-blue-500 bg-blue-50 p-3 text-blue-700">
 							<p>Processing your request...</p>

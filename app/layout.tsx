@@ -14,6 +14,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" className="h-full w-full">
 			<body className={'h-full w-full font-sans antialiased'}>
+				<script src="https://accounts.google.com/gsi/client" async defer></script>
 				{/* <body className={'font-serif antialiased'}> */}
 				{/* <body className={'font-mono antialiased'}> */}
 				{/* <body className={'font-code antialiased'}> */}

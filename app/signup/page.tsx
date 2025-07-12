@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { SignUpArgs } from '../types';
 import { parseError } from '@/lib/utils/server_util';
-import EnrollMFASignupSuccess from '@/components/auth/EnrollMFASignupSuccess';
+import EnableMFA from '@/components/auth/EnableMFA';
 
 export default function signup() {
 	const supabase = createClient();
@@ -20,7 +20,7 @@ export default function signup() {
 	// success, loading, error, null
 
 	useEffect(() => {
-		signUp('kevinboriboonsomsin@protonmail.com', 'Ab123456!', 'nivek');
+		signUp('kevinboriboonsomsin@gmail.com', 'Ab123456!', 'nivek');
 		// signUp('deanhiran@gmail.com', 'Ab123456!', 'jorxy');
 	}, []);
 
@@ -59,7 +59,7 @@ export default function signup() {
 	}
 
 	if (status.status === 'success') {
-		return <EnrollMFASignupSuccess/>
+		return <EnableMFA message={'Sign Up Successful'}/>
 	}
 
 	return (
